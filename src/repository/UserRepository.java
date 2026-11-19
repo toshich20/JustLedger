@@ -1,5 +1,14 @@
 package repository;
 
-public class UserRepository {
+import model.User;
 
+import java.util.Collection;
+import java.util.Optional;
+
+public interface UserRepository {
+
+    void save(User user);
+    Optional<User> findByLogin(String login);
+    boolean existsByLogin(String login);
+    Collection<User> findAll();
 }
