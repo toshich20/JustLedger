@@ -3,7 +3,7 @@ package model;
 public class User {
     private final String login;
     private String password;
-    private final Wallet wallet;
+    private Wallet wallet;
 
     public User (String login, String password, Wallet wallet) {
         if (login == null || login.isBlank()) {
@@ -37,5 +37,9 @@ public class User {
 
     public boolean checkPassword(String rawPassword) {
         return password.equals(rawPassword);
+    }
+
+    public void setWallet(Wallet wallet) {
+        this.wallet = wallet;
     }
 }
