@@ -71,4 +71,6 @@ public class Wallet {
         }
         return categoryMap.remove(name.trim().toLowerCase()) != null;
     }
+
+
 }
