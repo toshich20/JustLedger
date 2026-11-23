@@ -17,7 +17,7 @@ public class Main {
 
         AuthService authService = new AuthService(userRepository, walletStorage);
         NotificationService notificationService = new NotificationService();
-        FinanceService financeService = new FinanceService(authService, userRepository, notificationService);
+        FinanceService financeService = new FinanceService(authService, userRepository, walletStorage, notificationService);
         ReportService reportService = new ReportService(authService);
 
         ConsoleCli cli = new ConsoleCli(authService, financeService, reportService);

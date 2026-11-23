@@ -6,6 +6,7 @@ import model.OperationType;
 import model.User;
 import model.Wallet;
 import repository.UserRepository;
+import repository.WalletStorage;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -19,10 +20,12 @@ public class FinanceService {
 
     private final AuthService authService;
     private final UserRepository userRepository;
+    private final WalletStorage walletStorage;
     private final NotificationService notificationService;
 
     public FinanceService(AuthService authService,
                           UserRepository userRepository,
+                          WalletStorage walletStorage,
                           NotificationService notificationService) {
         if (authService == null) {
             throw new IllegalArgumentException("AuthService не может быть null");
@@ -30,15 +33,17 @@ public class FinanceService {
         if (userRepository == null) {
             throw new IllegalArgumentException("UserRepository не может быть null");
         }
+        if (walletStorage == null) {
+            throw new IllegalArgumentException("WalletStorage не может быть null");
+        }
         if (notificationService == null) {
             throw new IllegalArgumentException("NotificationService не может быть null");
         }
         this.authService = authService;
         this.userRepository = userRepository;
+        this.walletStorage = walletStorage;
         this.notificationService = notificationService;
     }
-
-    // --- 1. Операции (доходы и расходы) ---
 
     public void addIncome(String categoryName, double amount) {
         addIncome(categoryName, amount, null);
@@ -78,8 +83,6 @@ public class FinanceService {
         return notificationService.checkAfterExpense(wallet, category.getCategoryName());
     }
 
-    // --- 2. Управление категориями и бюджетами ---
-
     public void createCategory(String name, OperationType type, Double limit) {
         Wallet wallet = getCurrentWallet();
         Category category = new Category(name, type, limit);
@@ -103,8 +106,6 @@ public class FinanceService {
             throw new IllegalArgumentException("Категория '" + categoryName + "' не найдена");
         }
     }
-
-    // --- 3. Аналитика и выборки ---
 
     public double getTotalIncome() {
         return calculateTotalByType(getCurrentWallet(), OperationType.INCOME);
@@ -168,8 +169,6 @@ public class FinanceService {
                 .toList();
     }
 
-    // --- 4. Переводы между пользователями ---
-
     public List<String> transfer(String recipientLogin, double amount) {
         validateAmount(amount);
         if (recipientLogin == null || recipientLogin.isBlank()) {
@@ -186,7 +185,6 @@ public class FinanceService {
 
         LocalDateTime now = LocalDateTime.now();
 
-        // Списание у отправителя
         Wallet senderWallet = sender.getWallet();
         Category senderCategory = getOrCreateCategory(senderWallet, TRANSFER_CATEGORY, OperationType.EXPENSE);
         senderWallet.addOperation(new Operation(
@@ -197,7 +195,6 @@ public class FinanceService {
                 "Перевод пользователю " + recipient.getLogin()
         ));
 
-        // Зачисление получателю
         Wallet recipientWallet = recipient.getWallet();
         Category recipientCategory = getOrCreateCategory(recipientWallet, TRANSFER_CATEGORY, OperationType.INCOME);
         recipientWallet.addOperation(new Operation(
@@ -208,10 +205,10 @@ public class FinanceService {
                 "Перевод от пользователя " + sender.getLogin()
         ));
 
+        walletStorage.save(recipient.getLogin(), recipientWallet);
+
         return notificationService.checkAfterExpense(senderWallet, senderCategory.getCategoryName());
     }
-
-    // --- Вспомогательные приватные методы ---
 
     private User getCurrentUser() {
         return authService.getCurrentUser()
