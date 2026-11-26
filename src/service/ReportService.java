@@ -58,15 +58,16 @@ public class ReportService {
         }
 
         sb.append("\nБюджет по категориям расходов:\n");
-        if (expenseByCategory.isEmpty()) {
+        List<Category> budgetCategories = wallet.getCategoryMap().values().stream()
+                .filter(category -> category.getOperationType() == OperationType.EXPENSE)
+                .toList();
+        if (budgetCategories.isEmpty()) {
             sb.append("  (нет данных)\n");
         } else {
-            for (Map.Entry<String, Double> entry : expenseByCategory.entrySet()) {
-                String catName = entry.getKey();
-                double spent = entry.getValue();
-                Double limit = wallet.getCategory(catName)
-                        .map(Category::getLimit)
-                        .orElse(null);
+            for (Category category : budgetCategories) {
+                String catName = category.getCategoryName();
+                double spent = expenseByCategory.getOrDefault(catName, 0.0);
+                Double limit = category.getLimit();
 
                 if (limit != null) {
                     double remaining = limit - spent;

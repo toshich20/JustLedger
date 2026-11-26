@@ -162,6 +162,15 @@ class JustLedgerTest {
     }
 
     @Test
+    void testReportIncludesBudgetCategoryWithoutOperations() {
+        financeService.createCategory("Ремонт", OperationType.EXPENSE, 10000.0);
+
+        String report = reportService.generateSummaryReport();
+        assertTrue(report.contains("Ремонт"));
+        assertTrue(report.contains("остаток 10000.00"));
+    }
+
+    @Test
     void testReportGenerationAndCsvExportImport() {
         financeService.addIncome("Зарплата", 60000);
         financeService.createCategory("Еда", OperationType.EXPENSE, 15000.0);

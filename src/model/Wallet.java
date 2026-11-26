@@ -6,11 +6,11 @@ public class Wallet {
     private double balance;
     private final List<Operation> operationList;
     private final Map<String,Category> categoryMap;
-    
+
     public Wallet () {
         this.balance = 0.0;
         this.operationList = new ArrayList<>();
-        this.categoryMap = new HashMap<>();
+        this.categoryMap = new LinkedHashMap<>();
     }
 
     //Геттеры
@@ -25,7 +25,7 @@ public class Wallet {
     public Map<String, Category> getCategoryMap() {
         return Collections.unmodifiableMap(categoryMap);
     }
-    
+
     //Основные методы
     public void addOperation(Operation operation) {
         if (operation == null) {
