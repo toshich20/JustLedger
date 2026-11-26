@@ -85,6 +85,20 @@ public class FinanceService {
 
     public void createCategory(String name, OperationType type, Double limit) {
         Wallet wallet = getCurrentWallet();
+        Category existing = wallet.getCategory(name).orElse(null);
+
+        if (existing != null) {
+            if (existing.getOperationType() != type) {
+                throw new IllegalArgumentException(
+                        "Категория '" + existing.getCategoryName() + "' относится к другому типу операций"
+                );
+            }
+            if (limit != null) {
+                existing.setLimit(limit);
+            }
+            return;
+        }
+
         Category category = new Category(name, type, limit);
         wallet.addCategory(category);
     }

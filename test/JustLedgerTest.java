@@ -56,6 +56,16 @@ class JustLedgerTest {
     }
 
     @Test
+    void testBudgetCanBeSetAfterOperationsCreatedCategory() {
+        financeService.addExpense("Еда", 800);
+        financeService.createCategory("Еда", OperationType.EXPENSE, 4000.0);
+
+        assertEquals(3200.0, financeService.getRemainingBudget("Еда"), 0.001);
+        assertThrows(IllegalArgumentException.class, () ->
+                financeService.createCategory("Еда", OperationType.INCOME, 1000.0));
+    }
+
+    @Test
     void testBudgetThresholdsAndNotifications() {
         financeService.addIncome("Зарплата", 50000);
         financeService.createCategory("Кафе", OperationType.EXPENSE, 10000.0);

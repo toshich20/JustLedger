@@ -80,7 +80,7 @@ public class ConsoleCli {
         System.out.println("\n=== Личный кабинет (" + currentLogin + ") ===");
         System.out.println("1. Добавить доход");
         System.out.println("2. Добавить расход");
-        System.out.println("3. Создать категорию");
+        System.out.println("3. Создать категорию / задать бюджет");
         System.out.println("4. Изменить лимит категории");
         System.out.println("5. Удалить категорию");
         System.out.println("6. Показать финансовый отчёт");
@@ -183,7 +183,7 @@ public class ConsoleCli {
         }
 
         financeService.createCategory(name, type, limit);
-        System.out.println("Категория '" + name.trim() + "' создана.");
+        System.out.println("Категория '" + name.trim() + "' сохранена.");
     }
 
     private void updateCategoryLimit() {
