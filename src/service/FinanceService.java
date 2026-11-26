@@ -122,11 +122,11 @@ public class FinanceService {
     }
 
     public double getTotalIncome() {
-        return calculateTotalByType(getCurrentWallet(), OperationType.INCOME);
+        return FinanceCalculator.totalByType(getCurrentWallet(), OperationType.INCOME);
     }
 
     public double getTotalExpense() {
-        return calculateTotalByType(getCurrentWallet(), OperationType.EXPENSE);
+        return FinanceCalculator.totalByType(getCurrentWallet(), OperationType.EXPENSE);
     }
 
     public double getBalance() {
@@ -157,11 +157,7 @@ public class FinanceService {
             if (category == null) {
                 missingCategories.add(rawName.trim());
             } else {
-                double total = wallet.getOperationList().stream()
-                        .filter(op -> op.operationType() == type)
-                        .filter(op -> op.categoryName().equalsIgnoreCase(category.getCategoryName()))
-                        .mapToDouble(Operation::amount)
-                        .sum();
+                double total = FinanceCalculator.byCategory(wallet, type, category.getCategoryName());
                 result.put(category.getCategoryName(), total);
             }
         }
@@ -182,7 +178,7 @@ public class FinanceService {
         if (limit == null) {
             return null;
         }
-        double spent = calculateCategoryExpense(wallet, category.getCategoryName());
+        double spent = FinanceCalculator.byCategory(wallet, OperationType.EXPENSE, category.getCategoryName());
         return limit - spent;
     }
 
@@ -270,20 +266,5 @@ public class FinanceService {
         if (!Double.isFinite(amount) || amount <= 0) {
             throw new IllegalArgumentException("Сумма должна быть положительным конечным числом");
         }
-    }
-
-    private double calculateTotalByType(Wallet wallet, OperationType type) {
-        return wallet.getOperationList().stream()
-                .filter(op -> op.operationType() == type)
-                .mapToDouble(Operation::amount)
-                .sum();
-    }
-
-    private double calculateCategoryExpense(Wallet wallet, String categoryName) {
-        return wallet.getOperationList().stream()
-                .filter(op -> op.operationType() == OperationType.EXPENSE)
-                .filter(op -> op.categoryName().equalsIgnoreCase(categoryName))
-                .mapToDouble(Operation::amount)
-                .sum();
     }
 }

@@ -13,10 +13,8 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class ReportService {
 
@@ -37,11 +35,13 @@ public class ReportService {
         Wallet wallet = user.getWallet();
         List<Operation> operations = wallet.getOperationList();
 
-        double totalIncome = calculateTotalByType(operations, OperationType.INCOME);
-        double totalExpense = calculateTotalByType(operations, OperationType.EXPENSE);
+        double totalIncome = FinanceCalculator.totalByType(operations, OperationType.INCOME);
+        double totalExpense = FinanceCalculator.totalByType(operations, OperationType.EXPENSE);
 
-        Map<String, Double> incomeByCategory = groupSumByCategory(operations, OperationType.INCOME);
-        Map<String, Double> expenseByCategory = groupSumByCategory(operations, OperationType.EXPENSE);
+        Map<String, Double> incomeByCategory = FinanceCalculator.groupSumByCategory(
+                operations, OperationType.INCOME);
+        Map<String, Double> expenseByCategory = FinanceCalculator.groupSumByCategory(
+                operations, OperationType.EXPENSE);
 
         StringBuilder sb = new StringBuilder();
         sb.append("=== Финансовый отчёт: ").append(user.getLogin()).append(" ===\n");
@@ -182,22 +182,5 @@ public class ReportService {
     private User getCurrentUser() {
         return authService.getCurrentUser()
                 .orElseThrow(() -> new IllegalStateException("Операция недоступна: выполните вход в систему"));
-    }
-
-    private double calculateTotalByType(List<Operation> operations, OperationType type) {
-        return operations.stream()
-                .filter(op -> op.operationType() == type)
-                .mapToDouble(Operation::amount)
-                .sum();
-    }
-
-    private Map<String, Double> groupSumByCategory(List<Operation> operations, OperationType type) {
-        return operations.stream()
-                .filter(op -> op.operationType() == type)
-                .collect(Collectors.groupingBy(
-                        Operation::categoryName,
-                        LinkedHashMap::new,
-                        Collectors.summingDouble(Operation::amount)
-                ));
     }
 }

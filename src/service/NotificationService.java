@@ -1,7 +1,6 @@
 package service;
 
 import model.Category;
-import model.Operation;
 import model.OperationType;
 import model.Wallet;
 
@@ -27,7 +26,8 @@ public class NotificationService {
                 Category category = categoryOpt.get();
                 Double limit = category.getLimit();
                 if (limit != null) {
-                    double spent = calculateCategoryExpense(wallet, category.getCategoryName());
+                    double spent = FinanceCalculator.byCategory(
+                            wallet, OperationType.EXPENSE, category.getCategoryName());
                     if (spent > limit) {
                         double overspent = spent - limit;
                         notifications.add(String.format(
@@ -46,8 +46,8 @@ public class NotificationService {
         }
 
         // Проверка соотношения общих расходов и доходов
-        double totalIncome = calculateTotalByType(wallet, OperationType.INCOME);
-        double totalExpense = calculateTotalByType(wallet, OperationType.EXPENSE);
+        double totalIncome = FinanceCalculator.totalByType(wallet, OperationType.INCOME);
+        double totalExpense = FinanceCalculator.totalByType(wallet, OperationType.EXPENSE);
         if (totalExpense > totalIncome) {
             notifications.add(String.format(
                     "Внимание! Общие расходы (%.2f) превысили общие доходы (%.2f).",
@@ -66,20 +66,5 @@ public class NotificationService {
         }
 
         return notifications;
-    }
-
-    private double calculateTotalByType(Wallet wallet, OperationType type) {
-        return wallet.getOperationList().stream()
-                .filter(op -> op.operationType() == type)
-                .mapToDouble(Operation::amount)
-                .sum();
-    }
-
-    private double calculateCategoryExpense(Wallet wallet, String categoryName) {
-        return wallet.getOperationList().stream()
-                .filter(op -> op.operationType() == OperationType.EXPENSE)
-                .filter(op -> op.categoryName().equalsIgnoreCase(categoryName))
-                .mapToDouble(Operation::amount)
-                .sum();
     }
 }
