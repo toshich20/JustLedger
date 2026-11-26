@@ -191,5 +191,6 @@ class JustLedgerTest {
         int imported = reportService.importOperationsFromCsv(csvFile);
         assertEquals(2, imported);
         assertEquals(55000.0, financeService.getBalance(), 0.001);
+        assertEquals(10000.0, financeService.getRemainingBudget("Еда"), 0.001);
     }
 }

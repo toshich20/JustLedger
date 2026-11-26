@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 public class ReportService {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private static final String CSV_HEADER = "Type;Category;Amount;DateTime;Comment";
+    private static final String CSV_HEADER = "Type;Category;Amount;DateTime;Comment;Budget";
 
     private final AuthService authService;
 
@@ -107,12 +107,17 @@ public class ReportService {
 
         for (Operation op : wallet.getOperationList()) {
             String comment = op.comment() == null ? "" : op.comment().replace(";", ",");
+            String budget = wallet.getCategory(op.categoryName())
+                    .map(Category::getLimit)
+                    .map(String::valueOf)
+                    .orElse("");
             String line = String.join(";",
                     op.operationType().name(),
                     op.categoryName(),
                     String.valueOf(op.amount()),
                     op.timeStamp().format(DATE_FORMATTER),
-                    comment
+                    comment,
+                    budget
             );
             lines.add(line);
         }
@@ -153,8 +158,15 @@ public class ReportService {
                 LocalDateTime timeStamp = LocalDateTime.parse(parts[3].trim(), DATE_FORMATTER);
                 String comment = parts.length > 4 && !parts[4].isBlank() ? parts[4].trim() : null;
 
-                if (wallet.getCategory(categoryName).isEmpty()) {
-                    wallet.addCategory(new Category(categoryName, type, null));
+                Double limit = parts.length > 5 && !parts[5].isBlank()
+                        ? Double.parseDouble(parts[5].trim())
+                        : null;
+
+                Category category = wallet.getCategory(categoryName).orElse(null);
+                if (category == null) {
+                    wallet.addCategory(new Category(categoryName, type, limit));
+                } else if (limit != null && category.getOperationType() == type) {
+                    category.setLimit(limit);
                 }
 
                 wallet.addOperation(new Operation(type, amount, categoryName, timeStamp, comment));
