@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 public class ConsoleCli {
@@ -49,6 +50,9 @@ public class ConsoleCli {
                 }
             } catch (IllegalArgumentException | IllegalStateException e) {
                 System.out.println("Ошибка: " + e.getMessage());
+            } catch (NoSuchElementException e) {
+                System.out.println("Ввод завершён. Выход из программы.");
+                running = false;
             } catch (Exception e) {
                 System.out.println("Непредвиденная ошибка: " + e.getMessage());
             }
