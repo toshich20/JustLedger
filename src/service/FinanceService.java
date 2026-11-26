@@ -134,6 +134,14 @@ public class FinanceService {
     }
 
     public Map<String, Double> getExpensesByCategories(List<String> categoryNames) {
+        return getTotalsByCategories(OperationType.EXPENSE, categoryNames);
+    }
+
+    public Map<String, Double> getIncomesByCategories(List<String> categoryNames) {
+        return getTotalsByCategories(OperationType.INCOME, categoryNames);
+    }
+
+    private Map<String, Double> getTotalsByCategories(OperationType type, List<String> categoryNames) {
         if (categoryNames == null || categoryNames.isEmpty()) {
             throw new IllegalArgumentException("Список категорий для подсчёта не может быть пустым");
         }
@@ -149,8 +157,12 @@ public class FinanceService {
             if (category == null) {
                 missingCategories.add(rawName.trim());
             } else {
-                double spent = calculateCategoryExpense(wallet, category.getCategoryName());
-                result.put(category.getCategoryName(), spent);
+                double total = wallet.getOperationList().stream()
+                        .filter(op -> op.operationType() == type)
+                        .filter(op -> op.categoryName().equalsIgnoreCase(category.getCategoryName()))
+                        .mapToDouble(Operation::amount)
+                        .sum();
+                result.put(category.getCategoryName(), total);
             }
         }
 

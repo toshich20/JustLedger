@@ -84,7 +84,7 @@ public class ConsoleCli {
         System.out.println("4. Изменить лимит категории");
         System.out.println("5. Удалить категорию");
         System.out.println("6. Показать финансовый отчёт");
-        System.out.println("7. Расходы по выбранным категориям");
+        System.out.println("7. Подсчёт по выбранным категориям");
         System.out.println("8. Операции за период");
         System.out.println("9. Перевод другому пользователю");
         System.out.println("10. Экспорт / Импорт данных");
@@ -100,7 +100,7 @@ public class ConsoleCli {
             case "4" -> updateCategoryLimit();
             case "5" -> removeCategory();
             case "6" -> System.out.println("\n" + reportService.generateSummaryReport());
-            case "7" -> showExpensesByCategories();
+            case "7" -> showTotalsByCategories();
             case "8" -> showOperationsByPeriod();
             case "9" -> transfer();
             case "10" -> handleExportImportMenu();
@@ -204,7 +204,15 @@ public class ConsoleCli {
         System.out.println("Категория удалена.");
     }
 
-    private void showExpensesByCategories() {
+    private void showTotalsByCategories() {
+        System.out.print("Тип операций (1 - расходы, 2 - доходы): ");
+        String typeChoice = scanner.nextLine().trim();
+        OperationType type = switch (typeChoice) {
+            case "1" -> OperationType.EXPENSE;
+            case "2" -> OperationType.INCOME;
+            default -> throw new IllegalArgumentException("Выберите 1 (Расходы) или 2 (Доходы)");
+        };
+
         System.out.print("Введите названия категорий через запятую: ");
         String line = scanner.nextLine();
         List<String> categories = Arrays.stream(line.split(","))
@@ -212,9 +220,12 @@ public class ConsoleCli {
                 .filter(s -> !s.isEmpty())
                 .toList();
 
-        Map<String, Double> result = financeService.getExpensesByCategories(categories);
+        Map<String, Double> result = type == OperationType.EXPENSE
+                ? financeService.getExpensesByCategories(categories)
+                : financeService.getIncomesByCategories(categories);
         double total = 0;
-        System.out.println("\nРасходы по выбранным категориям:");
+        System.out.println("\n" + (type == OperationType.EXPENSE ? "Расходы" : "Доходы")
+                + " по выбранным категориям:");
         for (Map.Entry<String, Double> entry : result.entrySet()) {
             System.out.printf("  - %s: %.2f%n", entry.getKey(), entry.getValue());
             total += entry.getValue();

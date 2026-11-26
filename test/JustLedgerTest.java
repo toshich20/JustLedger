@@ -127,6 +127,19 @@ class JustLedgerTest {
     }
 
     @Test
+    void testIncomesByMultipleCategoriesAndMissingCategory() {
+        financeService.addIncome("Зарплата", 60000);
+        financeService.addIncome("Бонус", 3000);
+
+        Map<String, Double> stats = financeService.getIncomesByCategories(List.of("Зарплата", "Бонус"));
+        assertEquals(60000.0, stats.get("Зарплата"), 0.001);
+        assertEquals(3000.0, stats.get("Бонус"), 0.001);
+
+        assertThrows(IllegalArgumentException.class, () ->
+                financeService.getIncomesByCategories(List.of("Зарплата", "Нет такой")));
+    }
+
+    @Test
     void testTransferBetweenUsers() {
         authService.register("polina", "qwerty");
 
