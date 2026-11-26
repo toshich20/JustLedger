@@ -1,3 +1,4 @@
+import cli.ConsoleCli;
 import model.Category;
 import model.Operation;
 import model.OperationType;
@@ -13,6 +14,12 @@ import service.FinanceService;
 import service.NotificationService;
 import service.ReportService;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -205,5 +212,72 @@ class JustLedgerTest {
         assertEquals(2, imported);
         assertEquals(55000.0, financeService.getBalance(), 0.001);
         assertEquals(10000.0, financeService.getRemainingBudget("Еда"), 0.001);
+    }
+
+    @Test
+    void testTransferValidation() {
+        assertThrows(IllegalArgumentException.class, () -> financeService.transfer("anton", 100));
+        assertThrows(IllegalArgumentException.class, () -> financeService.transfer("ghost", 100));
+    }
+
+    @Test
+    void testOperationsByPeriodFiltering() {
+        financeService.addIncome("Зарплата", 1000);
+        financeService.addExpense("Еда", 200);
+        LocalDateTime now = LocalDateTime.now();
+
+        assertEquals(2, financeService.getOperationsByPeriod(
+                now.minusDays(1), now.plusDays(1)).size());
+        assertThrows(IllegalArgumentException.class, () ->
+                financeService.getOperationsByPeriod(now.plusDays(1), now.minusDays(1)));
+    }
+
+    @Test
+    void testRemoveCategoryAndMissingCategoryErrors() {
+        financeService.createCategory("Еда", OperationType.EXPENSE, 1000.0);
+        financeService.removeCategory("Еда");
+
+        assertThrows(IllegalArgumentException.class, () -> financeService.getRemainingBudget("Еда"));
+    }
+
+    @Test
+    void testTextReportExport() throws Exception {
+        financeService.addIncome("Зарплата", 1000);
+        Path reportFile = tempDir.resolve("report.txt");
+
+        reportService.exportReportToTextFile(reportFile);
+
+        assertTrue(Files.readString(reportFile, StandardCharsets.UTF_8)
+                .contains("Общий доход:  1000.00"));
+    }
+
+    @Test
+    void testCliHelpCommand() {
+        String output = runCliWithInput("help\n0\n");
+
+        assertTrue(output.contains("Справка JustLedger"));
+        assertTrue(output.contains("Пример работы"));
+    }
+
+    @Test
+    void testCliExitsOnEndOfInput() {
+        String output = runCliWithInput("");
+
+        assertTrue(output.contains("Ввод завершён. Выход из программы."));
+    }
+
+    private String runCliWithInput(String input) {
+        InputStream originalIn = System.in;
+        PrintStream originalOut = System.out;
+        try {
+            System.setIn(new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)));
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            System.setOut(new PrintStream(output, true, StandardCharsets.UTF_8));
+            new ConsoleCli(authService, financeService, reportService).run();
+            return output.toString(StandardCharsets.UTF_8);
+        } finally {
+            System.setIn(originalIn);
+            System.setOut(originalOut);
+        }
     }
 }
