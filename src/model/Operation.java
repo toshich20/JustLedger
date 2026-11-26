@@ -13,8 +13,8 @@ public record Operation(
         if (operationType == null) {
             throw new IllegalArgumentException("Тип операции не может быть null");
         }
-        if (amount <= 0) {
-            throw new IllegalArgumentException("Сумма операции должна быть больше нуля");
+        if (!Double.isFinite(amount) || amount <= 0) {
+            throw new IllegalArgumentException("Сумма операции должна быть положительным конечным числом");
         }
         if (categoryName == null || categoryName.isBlank()) {
             throw new IllegalArgumentException("Категория не может быть пустой");

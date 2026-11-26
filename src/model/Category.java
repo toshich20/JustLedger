@@ -46,6 +46,9 @@ public class Category {
         if (operationType == OperationType.INCOME && limit != null) {
             throw new IllegalArgumentException("Нельзя задать лимит для доходов, не останавливайтесь в обогащении!!!");
         }
+        if (limit != null && !Double.isFinite(limit)) {
+            throw new IllegalArgumentException("Лимит должен быть конечным числом");
+        }
         if (limit != null && limit < 0) {
             throw new IllegalArgumentException("Лимит не может быть отрицательным");
         }

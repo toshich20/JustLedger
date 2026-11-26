@@ -255,8 +255,8 @@ public class FinanceService {
     }
 
     private void validateAmount(double amount) {
-        if (amount <= 0) {
-            throw new IllegalArgumentException("Сумма должна быть больше нуля");
+        if (!Double.isFinite(amount) || amount <= 0) {
+            throw new IllegalArgumentException("Сумма должна быть положительным конечным числом");
         }
     }
 

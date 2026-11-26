@@ -1,3 +1,4 @@
+import model.Category;
 import model.Operation;
 import model.OperationType;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,6 +54,22 @@ class JustLedgerTest {
         assertEquals(125000.0, financeService.getTotalIncome(), 0.001);
         assertEquals(20000.0, financeService.getTotalExpense(), 0.001);
         assertEquals(105000.0, financeService.getBalance(), 0.001);
+    }
+
+    @Test
+    void testNonFiniteAmountsAndLimitsAreRejected() {
+        assertThrows(IllegalArgumentException.class, () ->
+                financeService.addIncome("Зарплата", Double.NaN));
+        assertThrows(IllegalArgumentException.class, () ->
+                financeService.addExpense("Еда", Double.POSITIVE_INFINITY));
+        assertThrows(IllegalArgumentException.class, () ->
+                financeService.createCategory("Еда", OperationType.EXPENSE, Double.NaN));
+        assertThrows(IllegalArgumentException.class, () ->
+                new Category("Еда", OperationType.EXPENSE, Double.NEGATIVE_INFINITY));
+        assertThrows(IllegalArgumentException.class, () ->
+                new Operation(OperationType.INCOME, Double.NaN, "Зарплата"));
+
+        assertEquals(0.0, financeService.getBalance(), 0.001);
     }
 
     @Test

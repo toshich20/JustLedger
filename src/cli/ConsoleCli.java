@@ -305,9 +305,13 @@ public class ConsoleCli {
 
     private double parseDouble(String input) {
         try {
-            return Double.parseDouble(input.replace(",", "."));
+            double value = Double.parseDouble(input.replace(",", "."));
+            if (!Double.isFinite(value)) {
+                throw new NumberFormatException("Значение должно быть конечным");
+            }
+            return value;
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Ожидалось числовое значение, получено: '" + input + "'");
+            throw new IllegalArgumentException("Ожидалось конечное числовое значение, получено: '" + input + "'");
         }
     }
 
