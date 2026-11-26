@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +61,7 @@ public class ConsoleCli {
         System.out.println("\n=== Меню входа ===");
         System.out.println("1. Регистрация");
         System.out.println("2. Вход в аккаунт");
+        System.out.println("help. Справка");
         System.out.println("0. Выход из программы");
         System.out.print("Выберите действие: ");
 
@@ -67,10 +69,11 @@ public class ConsoleCli {
         switch (choice) {
             case "1" -> register();
             case "2" -> login();
+            case "help", "h" -> printHelp();
             case "0" -> {
                 return false;
             }
-            default -> System.out.println("Неизвестная команда. Введите 1, 2 или 0.");
+            default -> System.out.println("Неизвестная команда. Введите 1, 2, help или 0.");
         }
         return true;
     }
@@ -89,6 +92,7 @@ public class ConsoleCli {
         System.out.println("9. Перевод другому пользователю");
         System.out.println("10. Экспорт / Импорт данных");
         System.out.println("11. Выйти из аккаунта");
+        System.out.println("12. Справка (help)");
         System.out.println("0. Выход из программы");
         System.out.print("Выберите действие: ");
 
@@ -104,6 +108,7 @@ public class ConsoleCli {
             case "8" -> showOperationsByPeriod();
             case "9" -> transfer();
             case "10" -> handleExportImportMenu();
+            case "12", "help", "h" -> printHelp();
             case "11" -> {
                 authService.logout();
                 System.out.println("Вы вышли из аккаунта. Данные кошелька сохранены.");
@@ -226,10 +231,12 @@ public class ConsoleCli {
         double total = 0;
         System.out.println("\n" + (type == OperationType.EXPENSE ? "Расходы" : "Доходы")
                 + " по выбранным категориям:");
+        List<List<String>> rows = new ArrayList<>();
         for (Map.Entry<String, Double> entry : result.entrySet()) {
-            System.out.printf("  - %s: %.2f%n", entry.getKey(), entry.getValue());
+            rows.add(List.of(entry.getKey(), String.format("%.2f", entry.getValue())));
             total += entry.getValue();
         }
+        printTable(List.of("Категория", "Сумма"), rows);
         System.out.printf("Итого по выбранным категориям: %.2f%n", total);
     }
 
@@ -247,16 +254,18 @@ public class ConsoleCli {
         }
 
         System.out.println("\nОперации за период:");
+        List<List<String>> rows = new ArrayList<>();
         for (Operation op : operations) {
             String sign = op.operationType() == OperationType.INCOME ? "+" : "-";
-            String comment = op.comment() != null ? " (" + op.comment() + ")" : "";
-            System.out.printf("  [%s] %s%.2f | %s%s%n",
-                    op.timeStamp().toLocalDate(),
-                    sign,
-                    op.amount(),
+            rows.add(List.of(
+                    op.timeStamp().toLocalDate().toString(),
+                    op.operationType() == OperationType.INCOME ? "Доход" : "Расход",
                     op.categoryName(),
-                    comment);
+                    String.format("%s%.2f", sign, op.amount()),
+                    op.comment() == null ? "" : op.comment()
+            ));
         }
+        printTable(List.of("Дата", "Тип", "Категория", "Сумма", "Комментарий"), rows);
     }
 
     private void transfer() {
@@ -298,6 +307,54 @@ public class ConsoleCli {
             }
             default -> System.out.println("Неизвестная команда.");
         }
+    }
+
+    private void printHelp() {
+        System.out.println("\n=== Справка JustLedger ===");
+        System.out.println("Команды выбираются номером в меню; help или h показывают эту справку.");
+        System.out.println("Пример работы:");
+        System.out.println("  1) Регистрация: 1 -> логин -> пароль");
+        System.out.println("  2) Вход: 2 -> логин -> пароль");
+        System.out.println("  3) Доход: 1 -> Зарплата -> 20000 -> Enter");
+        System.out.println("  4) Расход: 2 -> Еда -> 300 -> Enter");
+        System.out.println("  5) Бюджет: 3 -> Еда -> 2 -> 4000");
+        System.out.println("  6) Отчёт: 6; подсчёт по категориям: 7; перевод: 9");
+        System.out.println("  7) Выход: 0 (данные кошелька сохраняются)");
+    }
+
+    private void printTable(List<String> headers, List<List<String>> rows) {
+        int[] widths = new int[headers.size()];
+        for (int i = 0; i < headers.size(); i++) {
+            widths[i] = headers.get(i).length();
+        }
+        for (List<String> row : rows) {
+            for (int i = 0; i < row.size(); i++) {
+                widths[i] = Math.max(widths[i], row.get(i).length());
+            }
+        }
+
+        StringBuilder border = new StringBuilder();
+        for (int width : widths) {
+            border.append("+").append("-".repeat(width + 2));
+        }
+        border.append("+");
+
+        System.out.println(border);
+        printTableRow(headers, widths);
+        System.out.println(border);
+        for (List<String> row : rows) {
+            printTableRow(row, widths);
+        }
+        System.out.println(border);
+    }
+
+    private void printTableRow(List<String> values, int[] widths) {
+        StringBuilder line = new StringBuilder("|");
+        for (int i = 0; i < widths.length; i++) {
+            String value = i < values.size() ? values.get(i) : "";
+            line.append(" ").append(String.format("%-" + widths[i] + "s", value)).append(" |");
+        }
+        System.out.println(line);
     }
 
     private void printAlerts(List<String> alerts) {
